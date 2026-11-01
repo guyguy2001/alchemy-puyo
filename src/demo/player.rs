@@ -1,7 +1,7 @@
 //! Player-specific behavior.
 
 use bevy::{
-    image::{ImageLoaderSettings, ImageSampler},
+    image::{ImageLoaderSettings, ImageSampler, TextureAtlasTemplate},
     prelude::*,
 };
 
@@ -27,35 +27,29 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 /// The player character.
-pub fn player(
-    max_speed: f32,
-    player_assets: &PlayerAssets,
-    texture_atlas_layouts: &mut Assets<TextureAtlasLayout>,
-) -> impl Bundle {
+pub fn player(max_speed: f32, player_assets: &PlayerAssets) -> impl Scene {
     // A texture atlas is a way to split a single image into a grid of related images.
     // You can learn more in this example: https://github.com/bevyengine/bevy/blob/latest/examples/2d/texture_atlas.rs
     let layout = TextureAtlasLayout::from_grid(UVec2::splat(32), 6, 2, Some(UVec2::splat(1)), None);
-    let texture_atlas_layout = texture_atlas_layouts.add(layout);
     let player_animation = PlayerAnimation::new();
 
-    (
-        Name::new("Player"),
-        Player,
-        Sprite::from_atlas_image(
-            player_assets.ducky.clone(),
-            TextureAtlas {
-                layout: texture_atlas_layout,
+    bsn! {
+       #Player
+       Player
+       Sprite {
+            image: {player_assets.ducky.clone()},
+            texture_atlas: {Some(TextureAtlasTemplate {
+                layout: asset_value(layout),
                 index: player_animation.get_atlas_index(),
-            },
-        ),
-        Transform::from_scale(Vec2::splat(8.0).extend(1.0)),
-        MovementController {
-            max_speed,
-            ..default()
-        },
-        ScreenWrap,
-        player_animation,
-    )
+            })},
+       }
+       Transform::from_scale(Vec2::splat(8.0).extend(1.0))
+       MovementController {
+           max_speed
+       }
+       ScreenWrap
+       player_animation
+    }
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
